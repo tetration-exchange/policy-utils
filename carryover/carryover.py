@@ -78,8 +78,7 @@ def do_merge(w0, w1):
         
         for policy in policies_in_w0[policy_type].values():
             if not policy["seen"]:
-                print("Adding non-existant policy")
-                w1["{}_policies"].append(policy["policy"])
+                w1[policy_type].append(policy["policy"])
 
 
 def merge_l4_params(a, b):
