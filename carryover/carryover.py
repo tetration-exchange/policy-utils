@@ -58,10 +58,7 @@ def do_merge(w0, w1):
             actn = policy["action"]
             cons = policy["consumer_filter_id"]
             prov = policy["provider_filter_id"]
-            policies_in_w0[policy_type]["{}+{}+{}".format(actn, cons, prov)] = {
-                "policy": policy,
-                "seen": False
-            }
+            policies_in_w0[policy_type]["{}+{}+{}".format(actn, cons, prov)] = {"policy": policy, "seen": False}
 
         for policy in w1[policy_type]:
             actn = policy["action"]
@@ -75,7 +72,7 @@ def do_merge(w0, w1):
             # there is no old policy to merge with
             except KeyError:
                 continue
-        
+
         for policy in policies_in_w0[policy_type].values():
             if not policy["seen"]:
                 w1[policy_type].append(policy["policy"])
@@ -99,9 +96,10 @@ def merge_l4_params(a, b):
         for port_range in ports:
             results.append({"proto": proto, "port": port_range})
     for proto in non_port_based_protos:
-            results.append({"proto": proto})
-        
+        results.append({"proto": proto})
+
     return results
+
 
 def merge_intervals(intervals):
     # https://codereview.stackexchange.com/questions/69242/merging-overlapping-intervals
