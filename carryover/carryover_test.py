@@ -22,7 +22,7 @@ def test_equal():
 def test_not_equal_joined():
     intervals = [(1, 5), (6, 10)]
     result = carryover.merge_intervals(intervals)
-    assert list(result) == [(1, 5), (6, 10)]
+    assert list(result) == [(1, 10)]
 
 
 def test_not_equal_disjoint():

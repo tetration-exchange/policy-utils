@@ -113,7 +113,7 @@ def merge_intervals(intervals):
     low, high = sorted_intervals[0]
 
     for iv in sorted_intervals[1:]:
-        if iv[0] <= high:  # new interval overlaps current run
+        if iv[0] <= high + 1:  # new interval overlaps current run
             high = max(high, iv[1])  # merge with the current run
         else:  # current run is over
             yield low, high  # yield accumulated interval
