@@ -1,11 +1,15 @@
 from __future__ import print_function
 
+import argparse
 from collections import defaultdict
 from json import dumps
 from operator import itemgetter
-import argparse
 
+import requests
+from requests.packages.urllib3.exceptions import InsecureRequestWarning  # pylint: disable=import-error
 from tetpyclient import RestClient
+
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)  #pylint: disable=no-member
 
 
 def get_workspaces():
@@ -32,7 +36,7 @@ def post_workspace(workspace):
     incr = int(split_version[1]) + 1
     workspace["version"] = "v{}".format(incr)
 
-    res = rc.post("/applications", json_body=dumps(workspace))
+    res = rc.post("/applications", json_body=dumps(workspace), timeout=60)
     if res.ok:
         print("> Success!")
     else:
@@ -52,6 +56,8 @@ def do_merge(w0, w1):
         do_merge() performs an in-place merge of w0 into w1
     """
     policies_in_w0 = {"default_policies": {}, "absolute_policies": {}}
+
+    update_cluster_ids(w0, w1)
 
     for policy_type in policies_in_w0.keys():
         for policy in w0[policy_type]:
@@ -76,6 +82,24 @@ def do_merge(w0, w1):
         for policy in policies_in_w0[policy_type].values():
             if not policy["seen"]:
                 w1[policy_type].append(policy["policy"])
+
+
+def update_cluster_ids(w0, w1):
+    """
+        ADM will cause cluster ids to change; policies cannot be imported referencing the old cluster id
+        This function re-maps new cluster ids onto old policies. 
+        The matching is performed on the cluster name, which is not ideal, but should hold for most scenarios
+    """
+    clusters_in_w1 = {}
+    for cluster in w1.get("clusters", []):
+        clusters_in_w1[cluster["name"]] = cluster["id"]
+
+    if clusters_in_w1:
+        for policy in w0["default_policies"] + w0["absolute_policies"]:
+            if policy["consumer_filter_name"] in clusters_in_w1:
+                policy["consumer_filter_id"] = clusters_in_w1[policy["consumer_filter_name"]]
+            if policy["provider_filter_name"] in clusters_in_w1:
+                policy["provider_filter_id"] = clusters_in_w1[policy["provider_filter_name"]]
 
 
 def merge_l4_params(a, b):
@@ -130,7 +154,7 @@ def main():
     parser.add_argument("secret", help="API secret")
     args = parser.parse_args()
 
-    rc = RestClient(args.url, api_key=args.key, api_secret=args.secret)
+    rc = RestClient(args.url, api_key=args.key, api_secret=args.secret, verify=False)
 
     print("""
 Tetration ADM Carry-over-Tool
